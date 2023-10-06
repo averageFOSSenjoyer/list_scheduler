@@ -1,48 +1,90 @@
 ﻿#include <iostream>
-#include <fstream>
 #include <format>
-#include <boost/algorithm/string.hpp>
 #include "scheduler.hpp"
+
+std::ofstream Scheduler::logger;
 
 Scheduler::Scheduler() = default;
 
 Scheduler::Scheduler(const std::string &graph, const std::string &timing, const std::string &constraints) {
+    Scheduler::logger = std::ofstream("log.txt");
     parseGraph(graph, this->dependencyGraph, this->operationMap);
     parseResource(timing, this->timingMap);
     parseResource(constraints, this->constraintsMap);
 }
 
-void Scheduler::parseGraph(const std::string &file, boost::directed_graph<> &graph, boost::unordered_map<int, std::string> &map) {
+int Scheduler::getNumNodes(const std::string &file) {
     std::ifstream stream(file);
     std::string line;
-    int totalNodes;
-
     std::getline(stream, line);
-    totalNodes = std::stoi(line);
+    return std::stoi(line);
+}
 
-    while(std::getline(stream, line)) {
-        std::vector<std::string> vec;
+void Scheduler::getText(const std::string &file, std::vector<std::vector<std::string>>& text) {
+    std::ifstream stream(file);
+    std::string line;
+    std::getline(stream, line);
+    for (auto & vec : text) {
+        std::getline(stream, line);
         std::stringstream ss(line);
         std::string str;
+
         while(std::getline(ss, str, ',')) {
             vec.push_back(str);
         }
 
-        if (vec.size() != 3) {
-            throw std::invalid_argument(std::format("Invalid format at line: \"{}\"", line));
-        }
-
         boost::erase_all(vec[0], ",");
+        boost::erase_all(vec[1], "[");
+        boost::erase_all(vec[1], "]");
+        boost::erase_all(vec[1], ",");
         boost::erase_all(vec[2], " ");
-        map[std::stoi(vec[0])] = vec[2];
-    }
-
-    if (map.size() != totalNodes) {
-        throw std::invalid_argument(std::format("Potentially corrupt input \"{}\"", file));
     }
 }
 
+void Scheduler::buildOperationMap(const std::vector<std::vector<std::string>>& text, boost::unordered_map<int, std::string> &map) {
+    log("Building operation map...");
+    for (const auto& t : text) {
+        map[std::stoi(t[0])] = t[2];
+    }
+}
+
+void Scheduler::buildDependencyGraph(const std::vector<std::vector<std::string>>& text, LabeledGraph& graph) {
+    log("Building dependency graph...");
+    for (const auto& t : text) {
+        boost::add_vertex(std::stoi(t[0]), graph);
+    }
+
+    for (const auto& t : text) {
+        std::stringstream ss(t[1]);
+        int child;
+        while(ss >> child) {
+            boost::add_edge(
+                    boost::vertex_by_label(std::stoi(t[0]), graph),
+                    boost::vertex_by_label(child, graph),
+                    graph);
+        }
+    }
+
+    log("Creating dot file...");
+    makeDot(std::ofstream("graph.dot"));
+}
+
+void Scheduler::parseGraph(const std::string &file, LabeledGraph &graph, boost::unordered_map<int, std::string> &map) {
+    log(std::format("Reading {}", file));
+
+    int totalNodes = getNumNodes(file);
+    log(std::format("Total Nodes: {}", totalNodes));
+
+    std::vector<std::vector<std::string>> text(totalNodes);
+    getText(file, text);
+
+    buildOperationMap(text, map);
+
+    buildDependencyGraph(text, graph);
+}
+
 void Scheduler::parseResource(const std::string &file, boost::unordered_map<std::string, int> &map) {
+    log(std::format("Reading {}", file));
     std::ifstream stream(file);
     std::string resource;
     int num;
@@ -88,4 +130,12 @@ std::ostream& operator<<(std::ostream &output, const Scheduler& scheduler) {
         << scheduler.printTiming()
         <<scheduler.printConstraints();
     return output;
+}
+
+void Scheduler::log(const std::string &msg) {
+    logger << msg << std::endl;
+}
+
+void Scheduler::makeDot(std::ofstream ofstream) {
+    boost::write_graphviz(ofstream, dependencyGraph);
 }

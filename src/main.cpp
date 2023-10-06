@@ -15,6 +15,7 @@ int validateParams(int argc, char* argv[], po::variables_map& vm) {
             ("graph,g", po::value<std::string>(), "Graph file - Topological dependency for scheduling")
             ("timing,t", po::value<std::string>(),"Timing file - Latency of operators")
             ("constraints,c", po::value<std::string>(),"Constraints file - Number of operators")
+            ("verbose,v", "Verbose output")
             ("help,h", "Prints the help menu");
 
 
@@ -54,8 +55,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    Scheduler scheduler(vm["graph"].as<std::string>(), vm["timing"].as<std::string>(), vm["constraints"].as<std::string>());
-    std::cout << scheduler;
+    Scheduler scheduler(vm["graph"].as<std::string>(),
+            vm["timing"].as<std::string>(),
+            vm["constraints"].as<std::string>());
 
     return 0;
 }
