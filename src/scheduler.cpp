@@ -38,6 +38,7 @@ void Scheduler::getText(const std::string &file, std::vector<std::vector<std::st
         boost::erase_all(vec[1], "]");
         boost::erase_all(vec[1], ",");
         boost::erase_all(vec[2], " ");
+        boost::erase_all(vec[2], "\r");
     }
 }
 
@@ -54,9 +55,10 @@ void Scheduler::buildDependencyGraph(const std::vector<std::vector<std::string>>
         boost::add_vertex(std::stoi(t[0]), graph);
     }
 
+    std::stringstream ss;
+    int child;
     for (const auto& t : text) {
-        std::stringstream ss(t[1]);
-        int child;
+        ss = std::stringstream(t[1]);
         while(ss >> child) {
             boost::add_edge(
                     boost::vertex_by_label(std::stoi(t[0]), graph),
