@@ -15,6 +15,8 @@ if(Boost_FOUND)
     add_executable(scheduler src/scheduler.cpp
             src/scheduler.hpp
             src/main.cpp
+            src/dag.hpp
+            src/dag.cpp
     )
     target_link_libraries(scheduler ${Boost_LIBRARIES})
 endif()
