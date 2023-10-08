@@ -18,8 +18,8 @@ public:
     [[nodiscard]] std::string printConstraints() const;
 
 private:
-    static void parseGraph(const std::string& file, DAG& graph, boost::unordered_map<int, std::string>& map);
-    static void buildDependencyGraph(const std::vector<std::vector<std::string>> &text, DAG &graph);
+    static void parseGraph(const std::string& file, DAG<int>& graph, boost::unordered_map<int, std::string>& map);
+    static void buildDependencyGraph(const std::vector<std::vector<std::string>> &text, DAG<int> &graph);
     static void log(const std::string& msg);
     static void parseResource(const std::string& file, boost::unordered_map<std::string, int>& map);
     static void buildOperationMap(const std::vector<std::vector<std::string>> &text, boost::unordered_map<int, std::string> &map);
@@ -28,7 +28,7 @@ private:
 
 
     static std::ofstream logger;
-    DAG dependencyGraph;
+    DAG<int> dependencyGraph;
     std::vector<int> criticalPath;
     boost::unordered_map<int, std::string> operationMap;
     boost::unordered_map<std::string, int> timingMap;

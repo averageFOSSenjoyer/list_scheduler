@@ -49,7 +49,7 @@ void Scheduler::buildOperationMap(const std::vector<std::vector<std::string>>& t
     }
 }
 
-void Scheduler::buildDependencyGraph(const std::vector<std::vector<std::string>>& text, DAG& graph) {
+void Scheduler::buildDependencyGraph(const std::vector<std::vector<std::string>>& text, DAG<int>& graph) {
     log("Building dependency graph...");
     for (const auto& t : text) {
         graph.addVertex(std::stoi(t[0]));
@@ -68,7 +68,7 @@ void Scheduler::buildDependencyGraph(const std::vector<std::vector<std::string>>
     graph.makeDot(std::ofstream("graph.dot"));
 }
 
-void Scheduler::parseGraph(const std::string &file, DAG &graph, boost::unordered_map<int, std::string> &map) {
+void Scheduler::parseGraph(const std::string &file, DAG<int> &graph, boost::unordered_map<int, std::string> &map) {
     log(std::format("Reading {}", file));
 
     int totalNodes = getNumNodes(file);
