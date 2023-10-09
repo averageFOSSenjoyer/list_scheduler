@@ -48,6 +48,20 @@ public:
         return ret;
     }
 
+    boost::unordered_set<LABEL> getParents(LABEL node) const {
+        boost::unordered_set<LABEL> parents;
+
+        for (const auto& v : g) {
+            for (const auto& e : v.second) {
+                if (e == node) {
+                    parents.insert(v.first);
+                }
+            }
+        }
+
+        return parents;
+    }
+
     boost::unordered_set<LABEL> getChildren(LABEL node) const {
         auto it = g.find(node);
 
