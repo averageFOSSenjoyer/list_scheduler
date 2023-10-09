@@ -58,6 +58,8 @@ int main(int argc, char* argv[]) {
     Scheduler scheduler(vm["graph"].as<std::string>(),
             vm["timing"].as<std::string>(),
             vm["constraints"].as<std::string>());
+    scheduler.makeDot();
+    scheduler.exec();
 
     return 0;
 }
