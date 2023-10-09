@@ -25,6 +25,8 @@ private:
     static void buildOperationMap(const std::vector<std::vector<std::string>> &text, boost::unordered_map<int, std::string> &map);
     static int getNumNodes(const std::string &file);
     static void getText(const std::string &file, std::vector<std::vector<std::string>> &text);
+    boost::tuple<int, std::vector<int>> findCriticalPathHelper(const boost::tuple<int, std::vector<int>>& path);
+    void findCriticalPath();
 
 
     static std::ofstream logger;
@@ -33,6 +35,8 @@ private:
     boost::unordered_map<int, std::string> operationMap;
     boost::unordered_map<std::string, int> timingMap;
     boost::unordered_map<std::string, int> constraintsMap;
+
+
 };
 
 #endif //SCHEDULER_SCHEDULER_HPP

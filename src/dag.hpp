@@ -26,7 +26,7 @@ public:
         g[from].insert(to);
     }
 
-    boost::unordered_set<LABEL> getVertices() {
+    boost::unordered_set<LABEL> getVertices() const {
         boost::unordered_set<LABEL> ret;
 
         for (const auto& v : g) {
@@ -36,7 +36,7 @@ public:
         return ret;
     }
 
-    boost::unordered_set<boost::tuple<LABEL, LABEL>> getEdges() {
+    boost::unordered_set<boost::tuple<LABEL, LABEL>> getEdges() const {
         boost::unordered_set<boost::tuple<LABEL, LABEL>> ret;
 
         for (const auto& v : g) {
@@ -48,11 +48,30 @@ public:
         return ret;
     }
 
-    boost::unordered_set<LABEL> getEdges(LABEL node) {
-        return g[node];
+    boost::unordered_set<LABEL> getChildren(LABEL node) const {
+        auto it = g.find(node);
+
+        if (it != g.end()) {
+            return it->second;
+        }
+
+        return boost::unordered_set<LABEL>();
     }
 
-    void makeDot(std::ofstream of) {
+    boost::unordered_set<LABEL> getStartingVertices() const {
+        boost::unordered_set<LABEL> vertices = getVertices();
+        boost::unordered_set<boost::tuple<LABEL, LABEL>> edges = getEdges();
+
+        for (const auto& e : edges) {
+            if (vertices.contains(get<1>(e))) {
+                vertices.erase(get<1>(e));
+            }
+        }
+
+        return vertices;
+    }
+
+    void makeDot(std::ofstream of) const {
         LabeledGraph boostGraph;
 
         boost::unordered_set<LABEL> vertices = getVertices();
@@ -72,7 +91,7 @@ public:
     }
 
 private:
-    boost::unordered_map<int, boost::unordered_set<int>> g;
+    boost::unordered_map<LABEL, boost::unordered_set<LABEL>> g;
 };
 
 #endif //SCHEDULER_DAG_HPP
