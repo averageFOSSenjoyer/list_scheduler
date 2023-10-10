@@ -88,21 +88,21 @@ void Scheduler::exec() {
 
 bool Scheduler::areAllScheduled(const boost::unordered_set<int>& nodes,
                                 boost::container::map<int, int>& schedule) {
-    return std::ranges::all_of(nodes.begin(), nodes.end(), [&schedule](int node) {
+    return std::ranges::all_of(nodes, [&schedule](int node) {
         return schedule[node] != -1;
     });
 }
 
 bool Scheduler::areAllScheduled(const boost::unordered_set<int>& nodes,
                                 boost::container::map<int, boost::tuple<int, int, int>>& listSchedule) {
-    return std::ranges::all_of(nodes.begin(), nodes.end(), [&listSchedule](int node) {
+    return std::ranges::all_of(nodes, [&listSchedule](int node) {
         return listSchedule[node].get<FINISHED>() != -1;
     });
 }
 
 int Scheduler::earliestSchedule(const boost::unordered_set<int>& parents,
                                 const boost::container::map<int, int>& schedule) {
-    int maxNode = *(std::ranges::max_element(parents.begin(), parents.end(),
+    int maxNode = *(std::ranges::max_element(parents,
                                              [&schedule, this](const int a, const int b) {
         return schedule.find(a)->second + timingMap[operationMap[a]] < schedule.find(b)->second + timingMap[operationMap[b]];
     }));
@@ -112,7 +112,7 @@ int Scheduler::earliestSchedule(const boost::unordered_set<int>& parents,
 
 int Scheduler::latestSchedule(int self, const boost::unordered_set<int>& children,
                               const boost::container::map<int, int>& schedule) {
-    int minNode =  *(std::ranges::min_element(children.begin(), children.end(),
+    int minNode =  *(std::ranges::min_element(children,
                                               [&schedule](const int a, const int b) {
         return schedule.find(a)->second < schedule.find(b)->second;
     }));
@@ -274,14 +274,9 @@ Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
         auto possibleNodes = hasResourceAndNode(resources, listSchedule);
         while (!possibleNodes.empty()) {
             for (auto [res, nodes] : possibleNodes) {
-                int lowestSlack = INT_MAX;
-                int lowestNode;
-                for (auto node : nodes) {
-                    if (slack[node] < lowestSlack) {
-                        lowestSlack = slack[node];
-                        lowestNode = node;
-                    }
-                }
+                int lowestNode = *std::ranges::min_element(nodes, [&slack](int a, int b) {
+                    return slack[a] < slack[b];
+                });
                 listSchedule[lowestNode].get<RUNNING>() = time;
                 resources[res] -= 1;
                 scheduled.insert(lowestNode);
