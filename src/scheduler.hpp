@@ -17,43 +17,45 @@ public:
     Scheduler(const std::string& graph, const std::string& timing, const std::string& constraints);
     void exec();
     void makeDot();
-    int getCriticalPathLength();
 
 private:
-    void printSchedule(const boost::container::map<int, int>& schedule, std::ofstream);
-
     static bool areAllScheduled(const boost::unordered_set<int>& nodes, boost::container::map<int, int> &schedule);
 
     static bool areAllScheduled(const boost::unordered_set<int> &nodes,
                                 boost::container::map<int, boost::tuple<int, int, int>> &listSchedule);
-
-    int earliestSchedule(const boost::unordered_set<int>& parents, const boost::container::map<int, int> &schedule);
-
-    int latestSchedule(int self, const boost::unordered_set<int>& children, const boost::container::map<int, int> &schedule);
-
-    boost::tuple<int, std::vector<int>> findCriticalPathHelper(const boost::tuple<int, std::vector<int>>& path);
-
-    void findCriticalPath();
-
-    void findASAP(boost::promise<boost::container::map<int, int>>& asapSchedule);
-
-    void findALAP(boost::promise<boost::container::map<int, int>>& alapSchedule);
 
     static boost::container::map<int, int>
     findSlack(boost::container::map<int, int>& asapSchedule, boost::container::map<int, int>& alapSchedule);
 
     static void printSlack(boost::container::map<int, int>& slack, std::basic_ofstream<char> of);
 
-    boost::container::map<int, boost::tuple<int, int, int>>
+    void printSchedule(const boost::container::map<int, int>& schedule, std::ofstream) const;
 
-    findListSchedule(boost::container::map<int, int>& slack);
+    [[nodiscard]] int getCriticalPathLength() const;
+
+    [[nodiscard]] int getNodeTiming(int node) const;
+
+    [[nodiscard]] int earliestSchedule(const boost::unordered_set<int>& parents, const boost::container::map<int, int> &schedule) const;
+
+    [[nodiscard]] int latestSchedule(int self, const boost::unordered_set<int>& children, const boost::container::map<int, int> &schedule) const;
+
+    [[nodiscard]] boost::tuple<int, std::vector<int>> findCriticalPathHelper(const boost::tuple<int, std::vector<int>>& path) const;
+
+    void findASAP(boost::promise<boost::container::map<int, int>>& asapSchedule)const ;
+
+    void findALAP(boost::promise<boost::container::map<int, int>>& alapSchedule)const ;
+
+    boost::container::map<int, boost::tuple<int, int, int>>
+    findListSchedule(boost::container::map<int, int>& slack) const;
 
     void
-    printListSchedule(boost::container::map<int, boost::tuple<int, int, int>> &listSchedule, std::ofstream of);
+    printListSchedule(const boost::container::map<int, boost::tuple<int, int, int>> &listSchedule, std::ofstream of) const;
 
     boost::unordered_map<std::string, boost::unordered_set<int>>
     hasResourceAndNode(const boost::unordered_map<std::string, int>& resources,
-                       boost::container::map<int, boost::tuple<int, int, int>>& listSchedule);
+                       boost::container::map<int, boost::tuple<int, int, int>>& listSchedule) const;
+
+    void findCriticalPath();
 
     static constexpr int READY = 0;
     static constexpr int RUNNING = 1;

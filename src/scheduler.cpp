@@ -12,14 +12,18 @@ Scheduler::Scheduler(const std::string &graph, const std::string &timing, const 
     constraintsMap = Parser::parseConstraints(constraints);
 }
 
-int Scheduler::getCriticalPathLength() {
+int Scheduler::getNodeTiming(int node) const {
+    return timingMap.at(operationMap.at(node));
+}
+
+int Scheduler::getCriticalPathLength() const {
     return std::accumulate(criticalPath.begin(), criticalPath.end(), 0,
                            [this](int a, int b) {
-        return a + timingMap[operationMap[b]];
+        return a + getNodeTiming(b);
     });
 }
 
-boost::tuple<int, std::vector<int>> Scheduler::findCriticalPathHelper(const boost::tuple<int, std::vector<int>>& path) {
+boost::tuple<int, std::vector<int>> Scheduler::findCriticalPathHelper(const boost::tuple<int, std::vector<int>>& path) const {
     boost::unordered_set<int> children = dependencyGraph.getChildren(path.get<1>().back());
 
     if (children.empty()) {
@@ -30,7 +34,7 @@ boost::tuple<int, std::vector<int>> Scheduler::findCriticalPathHelper(const boos
     int criticalLength = 0;
     for (const auto& v : children) {
         auto potPath = path;
-        potPath.get<0>() += timingMap[operationMap[v]];
+        potPath.get<0>() += getNodeTiming(v);
         potPath.get<1>().push_back(v);
         auto nextPath = findCriticalPathHelper(potPath);
         if (nextPath.get<0>() > criticalLength) {
@@ -48,7 +52,7 @@ void Scheduler::findCriticalPath() {
     int criticalLength = 0;
     for (const auto& v : startingVertices) {
         auto nextPath
-        = findCriticalPathHelper(boost::tuple<int, std::vector<int>>(timingMap[operationMap[v]], {v}));
+        = findCriticalPathHelper(boost::tuple<int, std::vector<int>>(getNodeTiming(v), {v}));
         if (nextPath.get<0>() > criticalLength) {
             criticalLength = nextPath.get<0>();
             criticalPath = nextPath.get<1>();
@@ -89,38 +93,38 @@ void Scheduler::exec() {
 bool Scheduler::areAllScheduled(const boost::unordered_set<int>& nodes,
                                 boost::container::map<int, int>& schedule) {
     return std::ranges::all_of(nodes, [&schedule](int node) {
-        return schedule[node] != -1;
+        return schedule.at(node) != -1;
     });
 }
 
 bool Scheduler::areAllScheduled(const boost::unordered_set<int>& nodes,
                                 boost::container::map<int, boost::tuple<int, int, int>>& listSchedule) {
     return std::ranges::all_of(nodes, [&listSchedule](int node) {
-        return listSchedule[node].get<FINISHED>() != -1;
+        return listSchedule.at(node).get<FINISHED>() != -1;
     });
 }
 
 int Scheduler::earliestSchedule(const boost::unordered_set<int>& parents,
-                                const boost::container::map<int, int>& schedule) {
+                                const boost::container::map<int, int>& schedule) const {
     int maxNode = *(std::ranges::max_element(parents,
                                              [&schedule, this](const int a, const int b) {
-        return schedule.find(a)->second + timingMap[operationMap[a]] < schedule.find(b)->second + timingMap[operationMap[b]];
+        return schedule.find(a)->second + getNodeTiming(a) < schedule.find(b)->second + getNodeTiming(b);
     }));
 
-    return schedule.find(maxNode)->second + timingMap[operationMap[maxNode]];
+    return schedule.find(maxNode)->second + getNodeTiming(maxNode);
 }
 
 int Scheduler::latestSchedule(int self, const boost::unordered_set<int>& children,
-                              const boost::container::map<int, int>& schedule) {
+                              const boost::container::map<int, int>& schedule) const {
     int minNode =  *(std::ranges::min_element(children,
                                               [&schedule](const int a, const int b) {
         return schedule.find(a)->second < schedule.find(b)->second;
     }));
 
-    return schedule.find(minNode)->second - timingMap[operationMap[self]];
+    return schedule.find(minNode)->second - getNodeTiming(self);
 }
 
-void Scheduler::findASAP(boost::promise<boost::container::map<int, int>>& asapSchedule) {
+void Scheduler::findASAP(boost::promise<boost::container::map<int, int>>& asapSchedule) const {
     boost::unordered_set<int> workVertices = dependencyGraph.getVertices();
     boost::unordered_set<int> scheduled;
     boost::container::map<int, int> schedule;
@@ -155,7 +159,7 @@ void Scheduler::findASAP(boost::promise<boost::container::map<int, int>>& asapSc
     asapSchedule.set_value(schedule);
 }
 
-void Scheduler::findALAP(boost::promise<boost::container::map<int, int>>& alapSchedule) {
+void Scheduler::findALAP(boost::promise<boost::container::map<int, int>>& alapSchedule) const {
     boost::unordered_set<int> workVertices = dependencyGraph.getVertices();
     boost::unordered_set<int> scheduled;
     boost::container::map<int, int> schedule;
@@ -163,7 +167,7 @@ void Scheduler::findALAP(boost::promise<boost::container::map<int, int>>& alapSc
     for (const auto& v : workVertices) {
         auto children = dependencyGraph.getChildren(v);
         if (children.empty()) {
-            schedule[v] = getCriticalPathLength() - timingMap[operationMap[v]];
+            schedule[v] = getCriticalPathLength() - getNodeTiming(v);
             scheduled.insert(v);
         } else {
             schedule[v] = -1;
@@ -190,7 +194,7 @@ void Scheduler::findALAP(boost::promise<boost::container::map<int, int>>& alapSc
     alapSchedule.set_value(schedule);
 }
 
-void Scheduler::printSchedule(const boost::container::map<int, int>& schedule, std::ofstream of) {
+void Scheduler::printSchedule(const boost::container::map<int, int>& schedule, std::ofstream of) const {
     for (auto [node, time] : schedule) {
         of << "Node " << node << ": t=" << time << std::endl;
     }
@@ -204,7 +208,7 @@ Scheduler::findSlack(boost::container::map<int, int>& asapSchedule,
     boost::container::map<int, int> slack;
 
     for (auto [k, v] : asapSchedule) {
-        slack[k] = alapSchedule[k] - asapSchedule[k];
+        slack[k] = alapSchedule.at(k) - asapSchedule.at(k);
     }
 
     return slack;
@@ -218,7 +222,7 @@ void Scheduler::printSlack(boost::container::map<int, int>& slack, std::ofstream
 
 boost::unordered_map<std::string, boost::unordered_set<int>>
 Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& resources,
-                              boost::container::map<int, boost::tuple<int, int, int>>& listSchedule) {
+                              boost::container::map<int, boost::tuple<int, int, int>>& listSchedule) const {
     boost::unordered_set<int> availableNode;
     boost::unordered_set<std::string> availableRes;
     boost::unordered_map<std::string, boost::unordered_set<int>> result;
@@ -239,11 +243,11 @@ Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& reso
     }
 
     for (auto node : availableNode) {
-        if (availableRes.contains(operationMap[node])) {
-            if (result.contains(operationMap[node])) {
-                result[operationMap[node]].insert(node);
+        if (availableRes.contains(operationMap.at(node))) {
+            if (result.contains(operationMap.at(node))) {
+                result.at(operationMap.at(node)).insert(node);
             } else {
-                result[operationMap[node]] = {node};
+                result[operationMap.at(node)] = {node};
             }
         }
     }
@@ -252,7 +256,7 @@ Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& reso
 }
 
 boost::container::map<int, boost::tuple<int, int, int>>
-Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
+Scheduler::findListSchedule(boost::container::map<int, int>& slack) const {
     boost::unordered_set<int> workVertices = dependencyGraph.getVertices();
     boost::unordered_map<std::string, int> resources = constraintsMap;
     boost::container::map<int, boost::tuple<int, int, int>> listSchedule;
@@ -266,8 +270,8 @@ Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
     while (!workVertices.empty()) {
         for (auto node : workVertices) {
             auto parents = dependencyGraph.getParents(node);
-            if (areAllScheduled(parents, listSchedule) && listSchedule[node].get<READY>() == -1) {
-                listSchedule[node].get<READY>() = time;
+            if (areAllScheduled(parents, listSchedule) && listSchedule.at(node).get<READY>() == -1) {
+                listSchedule.at(node).get<READY>() = time;
             }
         }
 
@@ -275,10 +279,10 @@ Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
         while (!possibleNodes.empty()) {
             for (auto [res, nodes] : possibleNodes) {
                 int lowestNode = *std::ranges::min_element(nodes, [&slack](int a, int b) {
-                    return slack[a] < slack[b];
+                    return slack.at(a) < slack.at(b);
                 });
-                listSchedule[lowestNode].get<RUNNING>() = time;
-                resources[res] -= 1;
+                listSchedule.at(lowestNode).get<RUNNING>() = time;
+                resources.at(res) -= 1;
                 scheduled.insert(lowestNode);
             }
 
@@ -286,9 +290,10 @@ Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
         }
 
         for (auto node : workVertices) {
-            if (listSchedule[node].get<RUNNING>() != -1 && listSchedule[node].get<RUNNING>() + timingMap[operationMap[node]] - 1 == time) {
-                listSchedule[node].get<FINISHED>() = time;
-                resources[operationMap[node]] += 1;
+            if (listSchedule.at(node).get<RUNNING>() != -1
+                    && listSchedule.at(node).get<RUNNING>() + getNodeTiming(node) - 1 == time) {
+                listSchedule.at(node).get<FINISHED>() = time;
+                resources.at(operationMap.at(node)) += 1;
             }
         }
 
@@ -304,13 +309,13 @@ Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
     return listSchedule;
 }
 
-void Scheduler::printListSchedule(boost::container::map<int, boost::tuple<int, int, int>>& listSchedule,
-                                  std::ofstream of) {
+void Scheduler::printListSchedule(const boost::container::map<int, boost::tuple<int, int, int>>& listSchedule,
+                                  std::ofstream of) const {
     for (const auto& [k, v] : listSchedule) {
         of << "Node " << k << ": Ready t=" << v.get<READY>()
                 << "; Running t=" << v.get<RUNNING>() << "; Finished t=" << v.get<FINISHED>() << std::endl;
     }
 
-    int runtime = listSchedule[criticalPath.back()].get<FINISHED>() + 1;
+    int runtime = listSchedule.at(criticalPath.back()).get<FINISHED>() + 1;
     of << "Finished t=" <<  runtime << std::endl;
 }
