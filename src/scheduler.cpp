@@ -316,6 +316,6 @@ void Scheduler::printListSchedule(boost::container::map<int, boost::tuple<int, i
                 << "; Running t=" << v.get<RUNNING>() << "; Finished t=" << v.get<FINISHED>() << std::endl;
     }
 
-    int runtime = listSchedule[criticalPath.back()].get<FINISHED>() + timingMap[operationMap[criticalPath.back()]];
+    int runtime = listSchedule[criticalPath.back()].get<FINISHED>() + 1;
     of << "Finished t=" <<  runtime << std::endl;
 }
