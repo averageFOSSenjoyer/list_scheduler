@@ -243,8 +243,8 @@ Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& reso
     }
 
     for (auto node : availableNode) {
-        if (availableRes.contains(operationMap.at(node))) {
-            if (result.contains(operationMap.at(node))) {
+        if (availableRes.find(operationMap.at(node)) != availableRes.end()) {
+            if (result.find(operationMap.at(node)) != result.end()) {
                 result.at(operationMap.at(node)).insert(node);
             } else {
                 result[operationMap.at(node)] = {node};

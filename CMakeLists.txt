@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.22)
 project(scheduler)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Boost 1.83.0 REQUIRED COMPONENTS program_options thread)
+find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options thread)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 

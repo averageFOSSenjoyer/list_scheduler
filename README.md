@@ -5,7 +5,7 @@ This is a list scheduler implemented with C++ using slack heuristics.
 ### Dependencies
 ```
 gcc >= 13.1
-boost >= 1.83
+boost >= 1.74
 graphviz (if you want to see dependency graph)
 ```
 
