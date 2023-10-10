@@ -3,7 +3,6 @@
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <boost/container/set.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -37,8 +36,8 @@ public:
         return ret;
     }
 
-    boost::container::set<boost::tuple<LABEL, LABEL>> getEdges() const {
-        boost::container::set<boost::tuple<LABEL, LABEL>> ret;
+    boost::unordered_set<boost::tuple<LABEL, LABEL>> getEdges() const {
+        boost::unordered_set<boost::tuple<LABEL, LABEL>> ret;
 
         for (const auto& v : g) {
             for (const auto& e : v.second) {
@@ -75,7 +74,7 @@ public:
 
     boost::unordered_set<LABEL> getStartingVertices() const {
         boost::unordered_set<LABEL> vertices = getVertices();
-        boost::container::set<boost::tuple<LABEL, LABEL>> edges = getEdges();
+        boost::unordered_set<boost::tuple<LABEL, LABEL>> edges = getEdges();
 
         for (const auto& e : edges) {
             if (vertices.find(e.template get<1>()) != vertices.end()) {
@@ -94,7 +93,7 @@ public:
             boost::add_vertex(v, boostGraph);
         }
 
-        boost::container::set<boost::tuple<LABEL, LABEL>> edges = getEdges();
+        boost::unordered_set<boost::tuple<LABEL, LABEL>> edges = getEdges();
         for (const auto& e : edges) {
             boost::add_edge(
                     boost::vertex_by_label(boost::get<0>(e), boostGraph),
