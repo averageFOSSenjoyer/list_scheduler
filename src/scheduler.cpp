@@ -213,8 +213,8 @@ void Scheduler::printSlack(boost::container::map<int, int> slack, std::ofstream 
 
 boost::unordered_map<std::string, boost::unordered_set<int>>
 Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& resources,
-                                  const boost::container::map<int, int>& ready,
-                                  const boost::container::map<int, int>& running) {
+                                  boost::container::map<int, int>& ready,
+                                  boost::container::map<int, int>& running) {
     boost::unordered_set<int> availableNode;
     boost::unordered_set<std::string> availableRes;
     boost::unordered_map<std::string, boost::unordered_set<int>> result;
@@ -224,12 +224,12 @@ Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& reso
             availableRes.insert(res);
         }
     }
-    if (availableRes.size() == 0) {
+    if (availableRes.empty()) {
         return {};
     }
 
     for (auto [node, v] : ready) {
-        if (running.find(node) == running.end()) {
+        if (v != -1 && running[node] == -1) {
             availableNode.insert(node);
         }
     }
@@ -248,7 +248,7 @@ Scheduler::hasResourceAndNode(const boost::unordered_map<std::string, int>& reso
 }
 
 boost::container::map<int, boost::tuple<int, int, int>>
-Scheduler::findListSchedule(const boost::container::map<int, int>& slack) {
+Scheduler::findListSchedule(boost::container::map<int, int>& slack) {
     boost::unordered_set<int> workVertices = dependencyGraph.getVertices();
     boost::unordered_map<std::string, int> resources = constraintsMap;
     boost::container::map<int, boost::tuple<int, int, int>> listSchedule;
@@ -256,12 +256,18 @@ Scheduler::findListSchedule(const boost::container::map<int, int>& slack) {
     boost::container::map<int, int> running;
     boost::container::map<int, int> finished;
     boost::unordered_set<int> scheduled;
-    unsigned long time = 0;
+    int time = 0;
+
+    for (auto node : workVertices) {
+        ready[node] = -1;
+        running[node] = -1;
+        finished[node] = -1;
+    }
 
     while (!workVertices.empty()) {
         for (auto node : workVertices) {
             auto parents = dependencyGraph.getParents(node);
-            if (areAllScheduled(parents, running) && !ready.contains(node)) {
+            if (areAllScheduled(parents, finished) && ready[node] == -1) {
                 ready[node] = time;
             }
         }
@@ -272,8 +278,8 @@ Scheduler::findListSchedule(const boost::container::map<int, int>& slack) {
                 int lowestSlack = INT_MAX;
                 int lowestNode;
                 for (auto node : nodes) {
-                    if (slack.find(node)->second < lowestSlack) {
-                        lowestSlack = slack.find(node)->second;
+                    if (slack[node] < lowestSlack) {
+                        lowestSlack = slack[node];
                         lowestNode = node;
                     }
                 }
@@ -286,14 +292,16 @@ Scheduler::findListSchedule(const boost::container::map<int, int>& slack) {
         }
 
         for (auto node : workVertices) {
-            if (running.contains(node) && running[node] + timingMap[operationMap[node]] == time) {
-                finished[node] = time - 1;
+            if (running[node] != -1 && running[node] + timingMap[operationMap[node]] - 1 == time) {
+                finished[node] = time;
                 resources[operationMap[node]] += 1;
             }
         }
 
         for (auto [k, v] : finished) {
-            workVertices.erase(k);
+            if (v != -1) {
+                workVertices.erase(k);
+            }
         }
 
         time++;
