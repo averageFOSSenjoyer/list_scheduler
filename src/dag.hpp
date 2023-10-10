@@ -77,7 +77,7 @@ public:
         boost::unordered_set<boost::tuple<LABEL, LABEL>> edges = getEdges();
 
         for (const auto& e : edges) {
-            if (vertices.find(e.template get<1>()) != vertices.end()) {
+            if (vertices.contains(e.template get<1>())) {
                 vertices.erase(e.template get<1>());
             }
         }
