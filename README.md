@@ -5,9 +5,20 @@ This is a list scheduler implemented with C++ using slack heuristics.
 ### Dependencies
 ```
 gcc >= 13.1
-boost >= 1.74
+boost/libboost-all-dev >= 1.74
 graphviz (if you want to see dependency graph)
 ```
+
+#### Instruction for g++13 on ubuntu
+```
+apt update && apt install software-properties-common
+add-apt-repository ppa:ubuntu-toolchain-r/test
+apt install g++-13
+
+(Do this before cmake)
+export CXX=/usr/bin/g++-13
+```
+
 
 ### Build
 
