@@ -26,15 +26,22 @@ private:
     void findCriticalPath();
     boost::container::map<int, int> findASAP();
     boost::container::map<int, int> findALAP();
-    boost::container::map<int, int> findSlack(boost::container::map<int, int> map1, boost::container::map<int, int> map2);
+    boost::container::map<int, int> findSlack(boost::container::map<int, int> asapSchedule, boost::container::map<int, int> alapSchedule);
+    void printSlack(boost::container::map<int, int> map1, std::basic_ofstream<char> ofstream);
+    boost::container::map<int, boost::tuple<int, int, int>>
+    findListSchedule(const boost::container::map<int, int>& slack);
+    void
+    printListSchedule(const boost::container::map<int, boost::tuple<int, int, int>> &listSchedule, std::ofstream of);
+    boost::unordered_map<std::string, boost::unordered_set<int>>
+    hasResourceAndNode(const boost::unordered_map<std::string, int>& resources,
+                                  const boost::container::map<int, int>& ready,
+                                  const boost::container::map<int, int>& running);
 
     DAG<int> dependencyGraph;
     std::vector<int> criticalPath;
     boost::unordered_map<int, std::string> operationMap;
     boost::unordered_map<std::string, int> timingMap;
     boost::unordered_map<std::string, int> constraintsMap;
-
-    void printSlack(boost::container::map<int, int> map1, std::basic_ofstream<char> ofstream);
 };
 
 #endif //SCHEDULER_SCHEDULER_HPP
